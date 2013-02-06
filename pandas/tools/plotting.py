@@ -92,9 +92,8 @@ class _Options(dict):
 
 plot_params = _Options()
 
-
 def scatter_matrix(frame, alpha=0.5, figsize=None, ax=None, grid=False,
-                   diagonal='hist', marker='.', **kwds):
+                   diagonal='hist', marker='.', reduceLabels=False, **kwds):
     """
     Draw a matrix of scatter plots.
 
@@ -107,6 +106,8 @@ def scatter_matrix(frame, alpha=0.5, figsize=None, ax=None, grid=False,
     diagonal : pick between 'kde' and 'hist' for
         either Kernel Density Estimation or Histogram
         plot in the diagonal
+    reduceLabels : default is False. When True, drop
+        the ytick labels that appear on diagonals.
     kwds : other plotting keyword arguments
         To be passed to scatter function
 
@@ -185,12 +186,15 @@ def scatter_matrix(frame, alpha=0.5, figsize=None, ax=None, grid=False,
                 ax.yaxis.set_ticks_position('right')
                 ax.yaxis.set_label_position('right')
 
-            # ax.grid(b=grid)
+            if i != j:
+                ax.xaxis.grid(b=grid)
+                ax.yaxis.grid(b=grid)
 
-    axes[0, 0].yaxis.set_visible(False)
-    axes[n - 1, n - 1].xaxis.set_visible(False)
-    axes[n - 1, n - 1].yaxis.set_visible(False)
-    axes[0, n - 1].yaxis.tick_right()
+    if reduceLabels:
+        axes[0, 0].yaxis.set_visible(False)
+        axes[n - 1, n - 1].xaxis.set_visible(False)
+        axes[n - 1, n - 1].yaxis.set_visible(False)
+        axes[0, n - 1].yaxis.tick_right()
 
     for ax in axes.flat:
         setp(ax.get_xticklabels(), fontsize=8)
