@@ -1518,6 +1518,22 @@ def load(path):
     finally:
         f.close()
 
+def loadnpz(filename):
+    """
+    Load frame or series data to npz with d.keys() = ['values', 'index', 'columns'] (if columns exists).
+    The npz file should be portable between python 2 and 3.
+
+    TODO: (maybe) handle errors or let them raise themselves? Not sure the preferred way
+
+    TODO: add test
+    """
+    d = np.load(filename)
+    values = d['values'].values
+    kw = {k: d[k] for k in ['index', 'columns'] if k in d.keys()}
+    df = pandas.DataFrame(values, **kw)
+    return(df)
+
+
 
 class UTF8Recoder:
     """

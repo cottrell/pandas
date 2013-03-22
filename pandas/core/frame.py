@@ -731,6 +731,27 @@ class DataFrame(NDFrame):
             for i, k in enumerate(self.columns):
                 yield k, self.icol(i)
 
+    def savenpz(self, filename):
+        """
+        Save frame or series data to npz with d.keys() = ['values', 'index', 'columns'] (if columns exists).
+        The npz file should be portable between python 2 and 3.
+
+        tolist() conversion seems to do something that makes strings 2 to 3 portable.
+        haven't yet tested with dates yet. What other objects can be indexes?
+        I can imagine this will fail with generic objects
+
+        TODO: add test
+        """
+        d = dict()
+        d['index'] = self.index.values.tolist()
+        try:
+            d['columns'] = self.columns.values.tolist()
+        except AttributeError as e: # must be a series
+            pass
+        d['values'] = self.values
+        np.savez(filename, **d)
+        # optionally return d?
+
     def iterrows(self):
         """
         Iterate over rows of DataFrame as (index, Series) pairs
