@@ -11,10 +11,10 @@ import pandas as pd
 dec = np.testing.dec
 
 from pandas.util.testing import (assert_almost_equal, assert_series_equal,
-                                 assert_frame_equal, assert_panel_equal, assertRaisesRegexp)
+                                 assert_frame_equal, assert_panel_equal, assertRaisesRegexp, assert_array_equal)
 from numpy.testing import assert_equal
 
-from pandas import Series, DataFrame, bdate_range, Panel
+from pandas import Series, DataFrame, bdate_range, Panel, MultiIndex
 from pandas.core.datetools import BDay
 from pandas.core.index import Index
 from pandas.tseries.index import DatetimeIndex
@@ -30,6 +30,7 @@ from pandas._sparse import BlockIndex, IntIndex
 from pandas.sparse.api import (SparseSeries, SparseTimeSeries,
                                SparseDataFrame, SparsePanel,
                                SparseArray)
+import scipy.sparse
 
 import pandas.tests.test_frame as test_frame
 import pandas.tests.test_panel as test_panel
@@ -59,6 +60,28 @@ def _test_data2():
     arr[7:12] = nan
     arr[-1:] = nan
     return arr, index
+
+# test data generators for scipy_sparse interaction
+def _test_data_coo():
+    # not sure if should be keeping pandas outside the data constructor
+    a = np.arange(10 * 4)
+    a.shape = (10, 4)
+    df = DataFrame(a, columns=['a', 'b', 'c', 'd'])
+    df.iloc[3:-2,] = np.nan
+    df.iloc[:3,2:] = np.nan
+    df.iloc[-2:,:2] = np.nan
+    df.columns = MultiIndex.from_tuples([(1, 2, 'a'), (1, 1, 'b'), (2, 1, 'b'), (2, 2, 'c')]).T
+    # results to compare against
+    A = np.matrix([[ 0., 4., 8., 0., 0., 0., 0., 0., 0., 0.],
+                [ 0., 0., 0., 1., 5., 9., 0., 0., 0., 0.],
+                [ 0., 0., 0., 0., 0., 0., 34., 38., 0., 0.],
+                [ 0., 0., 0., 0., 0., 0., 0., 0., 35., 39.]])
+    A = scipy.sparse.coo_matrix(A)
+    il = [(1, 2), (1, 1), (2, 1), (2, 2)]
+    jl = [('a', 0), ('a', 1), ('a', 2), ('b', 0), ('b', 1), ('b', 2), ('b', 8), ('b', 9), ('c', 8), ('c', 9)]    
+    ilevels = [0, 1]
+    jlevels = [2, 3]
+    return(df, ilevels, jlevels, A, il, jl)
 
 
 def _test_data1_zero():
@@ -151,6 +174,9 @@ class TestSparseSeries(tm.TestCase,
                                       fill_value=0)
         self.ziseries2 = SparseSeries(arr, index=index, kind='integer',
                                       fill_value=0)
+
+        # a list of test data generators for the scipy_sparse interactions
+        self.to_coo_test_data = [_test_data_coo]
 
     def test_iteration_and_str(self):
         [x for x in self.bseries]
@@ -741,6 +767,18 @@ class TestSparseSeries(tm.TestCase,
 
         assert_sp_series_equal(result, result2)
         assert_sp_series_equal(result, expected)
+
+    def test_to_coo(self):
+        for f in self.to_coo_test_data:
+            (df, ilevels, jlevels, A_result, il_result, jl_result) = f()
+            s = df.unstack().to_sparse()
+            A, il, jl = s.to_coo(ilevels=ilevels, jlevels=jlevels)
+            # convert to dense and compare
+            assert_array_equal(A.todense(), A_result.todense())
+            # or compare directly as difference of sparse
+            assert(abs(A - A_result).max() < 1e-12)
+            assert_equal(il, il_result)
+            assert_equal(jl, jl_result)
 
 
 class TestSparseTimeSeries(tm.TestCase):

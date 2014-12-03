@@ -29,6 +29,8 @@ import pandas._sparse as splib
 
 from pandas.util.decorators import Appender
 
+from pandas.sparse.scipy_sparse import sparse_series_to_coo
+
 #------------------------------------------------------------------------------
 # Wrapper function for Series arithmetic methods
 
@@ -654,6 +656,25 @@ class SparseSeries(Series):
         dense_combined = self.to_dense().combine_first(other)
         return dense_combined.to_sparse(fill_value=self.fill_value)
 
+    def to_coo(self, ilevels=(0,), jlevels=(1,), sort_labels=False):
+        """
+        Create a scipy.sparse.coo_matrix from a SparseSeries with MultiIndex.
+        Use ilevels and jlevels to determine the row and column coordinates respectively.
+
+        Parameters
+        ----------
+        ilevels: tuple/list
+        jlevels: tuple/list
+        sort_labels: bool
+
+        Returns
+        -------
+        y : scipy.sparse.coo_matrix
+        il : list (row labels)
+        jl : list (column labels)
+        """
+        A, il, jl = sparse_series_to_coo(self, ilevels, jlevels, sort_labels=sort_labels)
+        return(A, il, jl)
 # overwrite series methods with unaccelerated versions
 ops.add_special_arithmetic_methods(SparseSeries, use_numexpr=False,
                                    **ops.series_special_funcs)
