@@ -1,20 +1,17 @@
 from pandas import *
-import numpy
+from numpy import nan, array
 from numpy.random import randn
 
-a = numpy.arange(10 * 4)
-a.shape = (10, 4)
-df = DataFrame(a, columns=['a', 'b', 'c', 'd'])
-df.iloc[3:-2,] = np.nan
-df.iloc[:3,2:] = np.nan
-df.iloc[-2:,:2] = np.nan
-df.columns = pandas.MultiIndex.from_tuples([(1, 2, 'a'), (1, 1, 'b'), (2, 1, 'b'), (2, 2, 'c')]).T
-
-# SparseDataFrame
-sdf = df.to_sparse()
+s = pandas.Series([3.0, nan, 1.0, nan, nan, nan])
+s.index = pandas.MultiIndex.from_tuples([(1, 2, 'a', 0),
+                                         (1, 2, 'a', 1),
+                                         (1, 1, 'b', 0),
+                                         (1, 1, 'b', 1),
+                                         (2, 1, 'b', 0),
+                                         (2, 1, 'b', 1)])
 
 # SparseSeries
-ss = df.unstack().to_sparse()
+ss = s.to_sparse()
 
 A, il, jl = ss.to_coo(ilevels=[0, 1], jlevels=[2, 3])
 
