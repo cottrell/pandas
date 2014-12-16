@@ -781,15 +781,21 @@ class TestSparseSeries(tm.TestCase,
             kwargs = {'sort_labels': True}
             return(ss, ilevels, jlevels, kwargs, A, il, jl)
 
-        for f in [_test_data_coo_0, _test_data_coo_1]:
-            (s, ilevels, jlevels, kwargs, A_result, il_result, jl_result) = f()
-            A, il, jl = s.to_coo(ilevels=ilevels, jlevels=jlevels, **kwargs)
+        def _check_results(A, il, jl, A_result, il_result, jl_result):
             # convert to dense and compare
             assert_array_equal(A.todense(), A_result.todense())
             # or compare directly as difference of sparse
             assert(abs(A - A_result).max() < 1e-12)
             assert_equal(il, il_result)
             assert_equal(jl, jl_result)
+
+        for f in [_test_data_coo_0, _test_data_coo_1]:
+            (s, ilevels, jlevels, kwargs, A_result, il_result, jl_result) = f()
+            A, il, jl = s.to_coo(ilevels=ilevels, jlevels=jlevels, **kwargs)
+            _check_results(A, il, jl, A_result, il_result, jl_result)
+            # test transpose of test data
+            A, il, jl = s.to_coo(ilevels=jlevels, jlevels=ilevels, **kwargs)
+            _check_results(A, il, jl, A_result.T, jl_result, il_result)
 
 
 class TestSparseTimeSeries(tm.TestCase):
