@@ -746,7 +746,7 @@ class TestSparseSeries(tm.TestCase,
     def test_to_coo(self):
 
         # test data generators for scipy_sparse interaction, move outside (the class) if the data ends up being reused
-        def _test_data_coo():
+        def _get_sparse_series_0():
             # not sure if should be keeping pandas outside the data constructor
             s = pd.Series([3.0, nan, 1.0, nan, nan, nan])
             s.index = pd.MultiIndex.from_tuples([(1, 2, 'a', 0),
@@ -757,24 +757,39 @@ class TestSparseSeries(tm.TestCase,
                                                  (2, 1, 'b', 1)])
             # SparseSeries
             ss = s.to_sparse()
+            return(ss)
+
+        def _test_data_coo_0():
+            ss = _get_sparse_series_0()
             # results to compare against
-            A = np.matrix([[3.,  0.],
-                           [0.,  1.]])
-            A = scipy.sparse.coo_matrix(A)
-            il = [(1, 2), (1, 1)]
-            jl = [('a', 0), ('b', 0)]
+            A = scipy.sparse.coo_matrix(([3, 1], ([0, 1], [0, 2])), shape=(3, 4))
+            il = [(1, 2), (1, 1), (2, 1)]
+            jl = [('a', 0), ('a', 1), ('b', 0), ('b', 1)]
             ilevels = [0, 1]
             jlevels = [2, 3]
-            return(ss, ilevels, jlevels, A, il, jl)
+            kwargs = {}  # leave empty, tests default behaviour
+            return(ss, ilevels, jlevels, kwargs, A, il, jl)
 
-        (s, ilevels, jlevels, A_result, il_result, jl_result) = _test_data_coo()
-        A, il, jl = s.to_coo(ilevels=ilevels, jlevels=jlevels)
-        # convert to dense and compare
-        assert_array_equal(A.todense(), A_result.todense())
-        # or compare directly as difference of sparse
-        assert(abs(A - A_result).max() < 1e-12)
-        assert_equal(il, il_result)
-        assert_equal(jl, jl_result)
+        def _test_data_coo_1():
+            ss = _get_sparse_series_0()
+            # results to compare against
+            A = scipy.sparse.coo_matrix(([3, 1], ([1, 0], [0, 2])), shape=(3, 4))
+            il = [(1, 1), (1, 2), (2, 1)]
+            jl = [('a', 0), ('a', 1), ('b', 0), ('b', 1)]
+            ilevels = [0, 1]
+            jlevels = [2, 3]
+            kwargs = {'sort_labels': True}
+            return(ss, ilevels, jlevels, kwargs, A, il, jl)
+
+        for f in [_test_data_coo_0, _test_data_coo_1]:
+            (s, ilevels, jlevels, kwargs, A_result, il_result, jl_result) = f()
+            A, il, jl = s.to_coo(ilevels=ilevels, jlevels=jlevels, **kwargs)
+            # convert to dense and compare
+            assert_array_equal(A.todense(), A_result.todense())
+            # or compare directly as difference of sparse
+            assert(abs(A - A_result).max() < 1e-12)
+            assert_equal(il, il_result)
+            assert_equal(jl, jl_result)
 
 
 class TestSparseTimeSeries(tm.TestCase):

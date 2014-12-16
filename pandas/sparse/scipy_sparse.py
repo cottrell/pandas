@@ -16,15 +16,18 @@ import itertools
 import numpy
 import scipy.sparse
 
+
 def _check_partition(left, right, whole):
     left = set(left)
     right = set(right)
     whole = set(whole)
-    assert(len(left.intersection(right))==0)
+    assert(len(left.intersection(right)) == 0)
     assert(left.union(right) == whole)
+
 
 def _get_index_level_subset(s, subset):
     return(list(zip(*[s.index.get_level_values(i) for i in subset])))
+
 
 def _squish(s):
     seen = set()
@@ -32,21 +35,30 @@ def _squish(s):
     out = [x for x in out if x not in seen and not seen.add(x)]
     return(out)
 
-def _get_label_to_i_dict(labels, sorted=False):
+
+def _get_label_to_i_dict(labels, sort_labels=False):
     labels = _squish(labels)
-    if sorted:
+    if sort_labels:
         labels = sorted(list(labels))
     d = dict({k: i for i, k in enumerate(labels)})
     return(d)
 
-def _get_sparse_coords(ss, blocs, blength, levels):
+
+def _get_sparse_coords(ss, levels, sort_labels=False):
+    blocs = ss._data.values.sp_index.blocs
+    blength = ss._data.values.sp_index.blengths
     il = _get_index_level_subset(ss, levels)
-    sparse_labels = list(itertools.chain(*[il[i:(i+j)] for i, j in zip(blocs, blength)]))
-    idict = _get_label_to_i_dict(sparse_labels)
-    i = [idict[tuple(k)] for k in sparse_labels]
+
+    # TODO: find a better/clearer way to do this part
+    idict = _get_label_to_i_dict(il, sort_labels=sort_labels)
     inv_dict = {v: k for k, v in idict.items()}
-    ordered_labels = [inv_dict[k] for k in range(len(idict))]
-    return(i, ordered_labels)
+
+    nonnull_labels = list(itertools.chain(*[il[i:(i + j)] for i, j in zip(blocs, blength)]))
+    ind = [idict[tuple(k)] for k in nonnull_labels]
+    ordered_labels = [inv_dict[i] for i in range(len(idict))]
+
+    return(ind, ordered_labels)
+
 
 def _to_ijv(ss, ilevels=(0,), jlevels=(1,), sort_labels=False):
     """ For arbitrary (MultiIndexed) SparseSeries return (v, i, j, ilabels, jlabels) where (v, (i, j)) is suitable for
@@ -54,11 +66,10 @@ def _to_ijv(ss, ilevels=(0,), jlevels=(1,), sort_labels=False):
     # index and column levels must be a partition of the index
     _check_partition(ilevels, jlevels, range(ss.index.nlevels))
     v = ss._data.values._valid_sp_values
-    blocs = ss._data.values.sp_index.blocs
-    blength = ss._data.values.sp_index.blengths
-    i, il = _get_sparse_coords(ss, blocs, blength, ilevels)
-    j, jl = _get_sparse_coords(ss, blocs, blength, jlevels)
+    i, il = _get_sparse_coords(ss, ilevels, sort_labels=sort_labels)
+    j, jl = _get_sparse_coords(ss, jlevels, sort_labels=sort_labels)
     return(v, i, j, il, jl)
+
 
 def sparse_series_to_coo(ss, ilevels=(0,), jlevels=(1,), sort_labels=False):
     """ Convert a SparseSeries to a scipy.sparse.coo_matrix using ilevels, jlevels as the row, column labels.

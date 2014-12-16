@@ -13,7 +13,7 @@ s.index = pandas.MultiIndex.from_tuples([(1, 2, 'a', 0),
 # SparseSeries
 ss = s.to_sparse()
 
-A, il, jl = ss.to_coo(ilevels=[0, 1], jlevels=[2, 3])
+A, il, jl = ss.to_coo(ilevels=[0, 1], jlevels=[2, 3], sort_labels=True)
 
 print(ss)
 print(A)
