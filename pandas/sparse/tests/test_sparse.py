@@ -748,7 +748,7 @@ class TestSparseSeries(tm.TestCase,
         # test data generators for scipy_sparse interaction, move outside (the class) if the data ends up being reused
         def _get_sparse_series_0():
             # not sure if should be keeping pandas outside the data constructor
-            s = pd.Series([3.0, nan, 1.0, nan, nan, nan])
+            s = pd.Series([3.0, nan, 1.0, 2.0, nan, nan])
             s.index = pd.MultiIndex.from_tuples([(1, 2, 'a', 0),
                                                  (1, 2, 'a', 1),
                                                  (1, 1, 'b', 0),
@@ -762,7 +762,7 @@ class TestSparseSeries(tm.TestCase,
         def _test_data_coo_0():
             ss = _get_sparse_series_0()
             # results to compare against
-            A = scipy.sparse.coo_matrix(([3, 1], ([0, 1], [0, 2])), shape=(3, 4))
+            A = scipy.sparse.coo_matrix(([3.0, 1.0, 2.0], ([0, 1, 1], [0, 2, 3])), shape=(3, 4))
             il = [(1, 2), (1, 1), (2, 1)]
             jl = [('a', 0), ('a', 1), ('b', 0), ('b', 1)]
             ilevels = [0, 1]
@@ -773,7 +773,7 @@ class TestSparseSeries(tm.TestCase,
         def _test_data_coo_1():
             ss = _get_sparse_series_0()
             # results to compare against
-            A = scipy.sparse.coo_matrix(([3, 1], ([1, 0], [0, 2])), shape=(3, 4))
+            A = scipy.sparse.coo_matrix(([3.0, 1.0, 2.0], ([1, 0, 0], [0, 2, 3])), shape=(3, 4))
             il = [(1, 1), (1, 2), (2, 1)]
             jl = [('a', 0), ('a', 1), ('b', 0), ('b', 1)]
             ilevels = [0, 1]

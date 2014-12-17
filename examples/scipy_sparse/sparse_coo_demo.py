@@ -2,7 +2,7 @@ from pandas import *
 from numpy import nan, array
 from numpy.random import randn
 
-s = pandas.Series([3.0, nan, 1.0, nan, nan, nan])
+s = pandas.Series([3.0, nan, 1.0, 3.0, nan, nan])
 s.index = pandas.MultiIndex.from_tuples([(1, 2, 'a', 0),
                                          (1, 2, 'a', 1),
                                          (1, 1, 'b', 0),
@@ -20,5 +20,5 @@ print(A)
 print(il)
 print(jl)
 
-# import IPython
-# IPython.embed()
+import IPython
+IPython.embed()
