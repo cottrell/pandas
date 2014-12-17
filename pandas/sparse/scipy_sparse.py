@@ -17,12 +17,13 @@ import numpy
 import scipy.sparse
 
 
-def _check_partition(left, right, whole):
-    left = set(left)
-    right = set(right)
+def _check_is_partition(parts, whole):
     whole = set(whole)
-    assert(len(left.intersection(right)) == 0)
-    assert(left.union(right) == whole)
+    parts = [set(x) for x in parts]
+    if set.intersection(*parts) != set():
+        raise(ValueError('Is not a partition because intersection is not null.'))
+    if set.union(*parts) != whole:
+        raise(ValueError('Is not a partition becuase union is not the whole.'))
 
 
 def _get_index_level_subset(s, subset):
@@ -64,7 +65,7 @@ def _to_ijv(ss, ilevels=(0,), jlevels=(1,), sort_labels=False):
     """ For arbitrary (MultiIndexed) SparseSeries return (v, i, j, ilabels, jlabels) where (v, (i, j)) is suitable for
     passing to scipy.sparse.coo constructory. """
     # index and column levels must be a partition of the index
-    _check_partition(ilevels, jlevels, range(ss.index.nlevels))
+    _check_is_partition([ilevels, jlevels], range(ss.index.nlevels))
     v = ss._data.values._valid_sp_values
     i, il = _get_sparse_coords(ss, ilevels, sort_labels=sort_labels)
     j, jl = _get_sparse_coords(ss, jlevels, sort_labels=sort_labels)
