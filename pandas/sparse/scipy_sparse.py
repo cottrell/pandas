@@ -14,7 +14,7 @@ from pandas.core.series import Series
 import itertools
 import numpy
 import scipy.sparse
-from collections import OrderedDict
+from pandas.compat import OrderedDict
 
 def _squish(s):
     """ Uniquify s while preserving order. Elements of s must be appendable to set. """
