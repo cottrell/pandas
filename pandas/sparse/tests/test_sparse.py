@@ -785,7 +785,7 @@ class TestSparseSeries(tm.TestCase,
             # convert to dense and compare
             assert_array_equal(A.todense(), A_result.todense())
             # or compare directly as difference of sparse
-            assert(abs(A - A_result).max() < 1e-12)
+            # assert(abs(A - A_result).max() < 1e-12) # max is failing in python 2.6
             assert_equal(il, il_result)
             assert_equal(jl, jl_result)
 
