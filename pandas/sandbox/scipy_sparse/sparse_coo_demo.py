@@ -1,6 +1,5 @@
 from pandas import *
-from numpy import nan, array
-from numpy.random import randn
+from numpy import nan
 
 s = pandas.Series([3.0, nan, 1.0, 3.0, nan, nan])
 s.index = pandas.MultiIndex.from_tuples([(1, 2, 'a', 0),
