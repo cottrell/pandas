@@ -621,6 +621,7 @@ Serialization / IO / Conversion
    Series.to_msgpack
    Series.to_json
    Series.to_sparse
+   SparseSeries.to_coo
    Series.to_dense
    Series.to_string
    Series.to_clipboard

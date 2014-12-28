@@ -135,3 +135,38 @@ recommend using ``block`` as it's more memory efficient. The ``integer`` format
 keeps an arrays of all of the locations where the data are not equal to the
 fill value. The ``block`` format tracks only the locations and sizes of blocks
 of data.
+
+Interaction with scipy.sparse
+-----------------------------
+
+Experimental api to transform between sparse pandas and scipy.sparse structures.
+
+``SparseSeries.to_coo``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+A ``SparseSeries.to_coo`` method is implemented for transforming a ``SparseSeries`` indexed by a ``MultiIndex`` to a ``scipy.sparse.coo_matrix``.
+
+.. ipython:: python
+   :suppress:
+
+   from numpy import nan
+
+.. ipython:: python
+
+   s = pandas.Series([3.0, nan, 1.0, 3.0, nan, nan])
+   s.index = pandas.MultiIndex.from_tuples([(1, 2, 'a', 0),
+                                            (1, 2, 'a', 1),
+                                            (1, 1, 'b', 0),
+                                            (1, 1, 'b', 1),
+                                            (2, 1, 'b', 0),
+                                            (2, 1, 'b', 1)])
+   
+   ss = s.to_sparse() # SparseSeries
+   
+   A, il, jl = ss.to_coo(ilevels=[0, 1], jlevels=[2, 3], sort_labels=True)
+
+   A
+   A.todense()
+   il
+   jl
+   
