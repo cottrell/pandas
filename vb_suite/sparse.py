@@ -48,7 +48,7 @@ s.index = pd.MultiIndex.from_product((range(10), range(10), range(10), range(10)
 ss = s.to_sparse()
 """
 
-stmt = "ss.to_coo(ilevels=[0, 1], jlevels=[2, 3], sort_labels=True)"
+stmt = "ss.to_coo(row_levels=[0, 1], column_levels=[2, 3], sort_labels=True)"
 
 sparse_series_to_coo = Benchmark(stmt, setup, name="sparse_series_to_coo",
                                start_date=datetime(2015, 1, 3))

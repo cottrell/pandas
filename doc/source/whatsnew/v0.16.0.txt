@@ -220,13 +220,14 @@ Interaction with scipy.sparse
      ss = s.to_sparse()
      ss
 
-     A, il, jl = ss.to_coo(ilevels=['A', 'B'], jlevels=['C', 'D'],
-                           sort_labels=False)
+     A, rows, columns = ss.to_coo(row_levels=['A', 'B'],
+                                  column_levels=['C', 'D'],
+                                  sort_labels=False)
 
      A
      A.todense()
-     il
-     jl
+     rows
+     columns
 
   The from_coo method is a convenience method for creating a ``SparseSeries``
   from a ``scipy.sparse.coo_matrix``:

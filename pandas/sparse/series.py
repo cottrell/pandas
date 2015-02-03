@@ -659,30 +659,30 @@ class SparseSeries(Series):
         dense_combined = self.to_dense().combine_first(other)
         return dense_combined.to_sparse(fill_value=self.fill_value)
 
-    def to_coo(self, ilevels=(0,), jlevels=(1,), sort_labels=False):
+    def to_coo(self, row_levels=(0,), column_levels=(1,), sort_labels=False):
         """
         Create a scipy.sparse.coo_matrix from a SparseSeries with MultiIndex.
 
-        Use ilevels and jlevels to determine the row and column coordinates respectively.
-        ilevels and jlevels are the names (labels) or numbers of the levels.
-        {ilevels, jlevels} must be a partition of the MultiIndex level names (or numbers).
+        Use row_levels and column_levels to determine the row and column coordinates respectively.
+        row_levels and column_levels are the names (labels) or numbers of the levels.
+        {row_levels, column_levels} must be a partition of the MultiIndex level names (or numbers).
 
         Parameters
         ----------
-        ilevels : tuple/list
-        jlevels : tuple/list
+        row_levels : tuple/list
+        column_levels : tuple/list
         sort_labels : bool, default False
             Sort the row and column labels before forming the sparse matrix.
 
         Returns
         -------
         y : scipy.sparse.coo_matrix
-        il : list (row labels)
-        jl : list (column labels)
+        rows : list (row labels)
+        columns : list (column labels)
         """
-        A, il, jl = _sparse_series_to_coo(
-            self, ilevels, jlevels, sort_labels=sort_labels)
-        return(A, il, jl)
+        A, rows, columns = _sparse_series_to_coo(
+            self, row_levels, column_levels, sort_labels=sort_labels)
+        return A, rows, columns
 
     @classmethod
     def from_coo(cls, A, dense_index=False):
@@ -700,7 +700,8 @@ class SparseSeries(Series):
         -------
         s : SparseSeries
         """
-        return(_coo_to_sparse_series(A, dense_index=dense_index))
+        return _coo_to_sparse_series(A, dense_index=dense_index)
+
 # overwrite series methods with unaccelerated versions
 ops.add_special_arithmetic_methods(SparseSeries, use_numexpr=False,
                                    **ops.series_special_funcs)

@@ -786,27 +786,28 @@ class TestSparseSeriesScipyInteraction(tm.TestCase):
         self.ils = [[(1, 2), (1, 1), (2, 1)], [(1, 1), (1, 2), (2, 1)]]
         self.jls = [[('a', 0), ('a', 1), ('b', 0), ('b', 1)]]
 
-    def test_to_coo_text_names_integer_ilevels_nosort(self):
+    def test_to_coo_text_names_integer_row_levels_nosort(self):
         ss = self.sparse_series[0]
-        kwargs = {'ilevels': [0, 1], 'jlevels': [2, 3]}
+        kwargs = {'row_levels': [0, 1], 'column_levels': [2, 3]}
         result = (self.coo_matrices[0], self.ils[0], self.jls[0])
         self._run_test(ss, kwargs, result)
 
-    def test_to_coo_text_names_integer_ilevels_sort(self):
+    def test_to_coo_text_names_integer_row_levels_sort(self):
         ss = self.sparse_series[0]
-        kwargs = {'ilevels': [0, 1], 'jlevels': [2, 3], 'sort_labels': True}
+        kwargs = {'row_levels': [0, 1],
+                  'column_levels': [2, 3], 'sort_labels': True}
         result = (self.coo_matrices[1], self.ils[1], self.jls[0])
         self._run_test(ss, kwargs, result)
 
-    def test_to_coo_integer_names_integer_ilevels_nosort(self):
+    def test_to_coo_integer_names_integer_row_levels_nosort(self):
         ss = self.sparse_series[1]
-        kwargs = {'ilevels': [3, 0], 'jlevels': [1, 2]}
+        kwargs = {'row_levels': [3, 0], 'column_levels': [1, 2]}
         result = (self.coo_matrices[0], self.ils[0], self.jls[0])
         self._run_test(ss, kwargs, result)
 
-    def test_to_coo_text_names_text_ilevels_nosort(self):
+    def test_to_coo_text_names_text_row_levels_nosort(self):
         ss = self.sparse_series[0]
-        kwargs = {'ilevels': ['A', 'B'], 'jlevels': ['C', 'D']}
+        kwargs = {'row_levels': ['A', 'B'], 'column_levels': ['C', 'D']}
         result = (self.coo_matrices[0], self.ils[0], self.jls[0])
         self._run_test(ss, kwargs, result)
 
@@ -847,10 +848,10 @@ class TestSparseSeriesScipyInteraction(tm.TestCase):
         results = ss.to_coo(**kwargs)
         self._check_results_to_coo(results, check)
         # for every test, also test symmetry property (transpose), switch
-        # ilevels and jlevels
+        # row_levels and column_levels
         d = kwargs.copy()
-        d['ilevels'] = kwargs['jlevels']
-        d['jlevels'] = kwargs['ilevels']
+        d['row_levels'] = kwargs['column_levels']
+        d['column_levels'] = kwargs['row_levels']
         results = ss.to_coo(**d)
         results = (results[0].T, results[2], results[1])
         self._check_results_to_coo(results, check)

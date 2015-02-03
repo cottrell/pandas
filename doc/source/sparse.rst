@@ -171,25 +171,27 @@ In the example below, we transform the ``SparseSeries`` to a sparse representati
 
 .. ipython:: python
 
-   A, il, jl = ss.to_coo(ilevels=['A', 'B'], jlevels=['C', 'D'],
-                         sort_labels=True)
+   A, rows, columns = ss.to_coo(row_levels=['A', 'B'],
+                                column_levels=['C', 'D'],
+                                sort_labels=True)
 
    A
    A.todense()
-   il
-   jl
+   rows
+   columns
 
 Specifying different row and column labels (and not sorting them) yields a different sparse matrix:
 
 .. ipython:: python
 
-   A, il, jl = ss.to_coo(ilevels=['A', 'B', 'C'], jlevels=['D'],
-                         sort_labels=False)
+   A, rows, columns = ss.to_coo(row_levels=['A', 'B', 'C'],
+                                column_levels=['D'],
+                                sort_labels=False)
 
    A
    A.todense()
-   il
-   jl
+   rows
+   columns
 
 A convenience method :meth:`SparseSeries.from_coo` is implemented for creating a ``SparseSeries`` from a ``scipy.sparse.coo_matrix``.
 
