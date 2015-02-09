@@ -679,6 +679,33 @@ class SparseSeries(Series):
         y : scipy.sparse.coo_matrix
         rows : list (row labels)
         columns : list (column labels)
+
+        Examples
+        --------
+        >>> from numpy import nan
+        >>> s = Series([3.0, nan, 1.0, 3.0, nan, nan])
+        >>> s.index = MultiIndex.from_tuples([(1, 2, 'a', 0),
+                                              (1, 2, 'a', 1),
+                                              (1, 1, 'b', 0),
+                                              (1, 1, 'b', 1),
+                                              (2, 1, 'b', 0),
+                                              (2, 1, 'b', 1)],
+                                              names=['A', 'B', 'C', 'D'])
+        >>> ss = s.to_sparse()
+        >>> A, rows, columns = ss.to_coo(row_levels=['A', 'B'],
+                                         column_levels=['C', 'D'],
+                                         sort_labels=True)
+        >>> A
+        <3x4 sparse matrix of type '<class 'numpy.float64'>'
+                with 3 stored elements in COOrdinate format>
+        >>> A.todense()
+        matrix([[ 0.,  0.,  1.,  3.],
+        [ 3.,  0.,  0.,  0.],
+        [ 0.,  0.,  0.,  0.]])
+        >>> rows
+        [(1, 1), (1, 2), (2, 1)]
+        >>> columns
+        [('a', 0), ('a', 1), ('b', 0), ('b', 1)]
         """
         A, rows, columns = _sparse_series_to_coo(
             self, row_levels, column_levels, sort_labels=sort_labels)
@@ -699,6 +726,28 @@ class SparseSeries(Series):
         Returns
         -------
         s : SparseSeries
+
+        Examples
+        ---------
+        >>> from scipy import sparse
+        >>> A = sparse.coo_matrix(([3.0, 1.0, 2.0], ([1, 0, 0], [0, 2, 3])),
+                               shape=(3, 4))
+        >>> A
+        <3x4 sparse matrix of type '<class 'numpy.float64'>'
+                with 3 stored elements in COOrdinate format>
+        >>> A.todense()
+        matrix([[ 0.,  0.,  1.,  2.],
+                [ 3.,  0.,  0.,  0.],
+                [ 0.,  0.,  0.,  0.]])
+        >>> ss = SparseSeries.from_coo(A)
+        >>> ss
+        0  2    1
+           3    2
+        1  0    3
+        dtype: float64
+        BlockIndex
+        Block locations: array([0], dtype=int32)
+        Block lengths: array([3], dtype=int32)
         """
         return _coo_to_sparse_series(A, dense_index=dense_index)
 
