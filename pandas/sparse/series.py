@@ -117,7 +117,7 @@ class SparseSeries(Series):
             if copy:
                 data = data.copy()
         else:
-            
+
             if data is None:
                 data = []
 
@@ -659,7 +659,7 @@ class SparseSeries(Series):
         dense_combined = self.to_dense().combine_first(other)
         return dense_combined.to_sparse(fill_value=self.fill_value)
 
-    def to_coo(self, row_levels=(0,), column_levels=(1,), sort_labels=False):
+    def to_coo(self, row_levels=(0,), column_levels=(1,), sort_labels=False, new_method=False):
         """
         Create a scipy.sparse.coo_matrix from a SparseSeries with MultiIndex.
 
@@ -708,7 +708,7 @@ class SparseSeries(Series):
         [('a', 0), ('a', 1), ('b', 0), ('b', 1)]
         """
         A, rows, columns = _sparse_series_to_coo(
-            self, row_levels, column_levels, sort_labels=sort_labels)
+            self, row_levels, column_levels, sort_labels=sort_labels, new_method=new_method)
         return A, rows, columns
 
     @classmethod
