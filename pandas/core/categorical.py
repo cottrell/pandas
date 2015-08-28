@@ -202,11 +202,15 @@ class Categorical(PandasObject):
     _typ = 'categorical'
 
     def __init__(self, values, categories=None, ordered=False, name=None, fastpath=False,
-                 levels=None):
+                 levels=None, use_values_as_codes_directly=False):
 
-        if fastpath:
+        if fastpath or use_values_as_codes_directly:
             # fast path
-            self._codes = _coerce_indexer_dtype(values, categories)
+            if use_values_as_codes_directly:
+                self._codes = values
+            else:
+                self._codes = _coerce_indexer_dtype(values, categories) # this is slow
+            self._codes = values
             self.categories = categories
             self._ordered = ordered
             return
@@ -349,7 +353,7 @@ class Categorical(PandasObject):
         return Categorical(data, **kwargs)
 
     @classmethod
-    def from_codes(cls, codes, categories, ordered=False, name=None):
+    def from_codes(cls, codes, categories, ordered=False, name=None, fastpath=False):
         """
         Make a Categorical type from codes and categories arrays.
 
@@ -374,9 +378,16 @@ class Categorical(PandasObject):
             warn(msg, UserWarning, stacklevel=2)
 
         try:
-            codes = np.asarray(codes, np.int64)
-        except:
-            raise ValueError("codes need to be convertible to an arrays of integers")
+            if fastpath:
+                assert(codes.dtype in [np.int8, np.int16, np.int32, np.int64])
+            else:
+                raise
+        except Exception as e:
+            try:
+                print("WARNING: running slow code")
+                codes = np.asarray(codes, np.int64)
+            except:
+                raise ValueError("codes need to be convertible to an arrays of integers")
 
         categories = cls._validate_categories(categories)
 
