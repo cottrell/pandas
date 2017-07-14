@@ -2371,6 +2371,7 @@ cpdef array_to_datetime(ndarray[object] values, errors='raise',
         bint is_coerce = errors=='coerce'
         _TSObject _ts
         int out_local=0, out_tzoffset=0
+        dict _res_cache = {}
 
     # specify error conditions
     assert is_raise or is_ignore or is_coerce
@@ -2380,9 +2381,13 @@ cpdef array_to_datetime(ndarray[object] values, errors='raise',
         iresult = result.view('i8')
         for i in range(n):
             val = values[i]
+            if val in _res_cache:
+                iresult[i] = _res_cache[val]
+                continue
 
             if _checknull_with_nat(val):
                 iresult[i] = NPY_NAT
+                _res_cache[val] = iresult[i]
 
             elif PyDateTime_Check(val):
                 seen_datetime=1
@@ -2390,11 +2395,13 @@ cpdef array_to_datetime(ndarray[object] values, errors='raise',
                     if utc_convert:
                         _ts = convert_to_tsobject(val, None, 'ns', 0, 0)
                         iresult[i] = _ts.value
+                        _res_cache[val] = iresult[i]
                         try:
                             _check_dts_bounds(&_ts.dts)
                         except ValueError:
                             if is_coerce:
                                 iresult[i] = NPY_NAT
+                                _res_cache[val] = iresult[i]
                                 continue
                             raise
                     else:
@@ -2403,6 +2410,7 @@ cpdef array_to_datetime(ndarray[object] values, errors='raise',
                                          'utc=True')
                 else:
                     iresult[i] = _pydatetime_to_dts(val, &dts)
+                    _res_cache[val] = iresult[i]
                     if is_timestamp(val):
                         iresult[i] += (<_Timestamp>val).nanosecond
                     try:
@@ -2410,30 +2418,36 @@ cpdef array_to_datetime(ndarray[object] values, errors='raise',
                     except ValueError:
                         if is_coerce:
                             iresult[i] = NPY_NAT
+                            _res_cache[val] = iresult[i]
                             continue
                         raise
 
             elif PyDate_Check(val):
                 iresult[i] = _date_to_datetime64(val, &dts)
+                _res_cache[val] = iresult[i]
                 try:
                     _check_dts_bounds(&dts)
                     seen_datetime=1
                 except ValueError:
                     if is_coerce:
                         iresult[i] = NPY_NAT
+                        _res_cache[val] = iresult[i]
                         continue
                     raise
 
             elif util.is_datetime64_object(val):
                 if get_datetime64_value(val) == NPY_NAT:
                     iresult[i] = NPY_NAT
+                    _res_cache[val] = iresult[i]
                 else:
                     try:
                         iresult[i] = _get_datetime64_nanos(val)
+                        _res_cache[val] = iresult[i]
                         seen_datetime=1
                     except ValueError:
                         if is_coerce:
                             iresult[i] = NPY_NAT
+                            _res_cache[val] = iresult[i]
                             continue
                         raise
 
@@ -2442,8 +2456,10 @@ cpdef array_to_datetime(ndarray[object] values, errors='raise',
 
                 if val != val or val == NPY_NAT:
                     iresult[i] = NPY_NAT
+                    _res_cache[val] = iresult[i]
                 elif is_raise or is_ignore:
                     iresult[i] = val
+                    _res_cache[val] = iresult[i]
                     seen_integer=1
                 else:
                     # coerce
@@ -2454,8 +2470,10 @@ cpdef array_to_datetime(ndarray[object] values, errors='raise',
                     seen_integer = 1
                     try:
                         iresult[i] = cast_from_unit(val, 'ns')
+                        _res_cache[val] = iresult[i]
                     except:
                         iresult[i] = NPY_NAT
+                        _res_cache[val] = iresult[i]
 
             elif util.is_string_object(val):
                 # string
@@ -2463,6 +2481,7 @@ cpdef array_to_datetime(ndarray[object] values, errors='raise',
                 try:
                     if len(val) == 0 or val in _nat_strings:
                         iresult[i] = NPY_NAT
+                        _res_cache[val] = iresult[i]
                         continue
 
                     seen_string=1
@@ -2473,12 +2492,14 @@ cpdef array_to_datetime(ndarray[object] values, errors='raise',
                         tz = pytz.FixedOffset(out_tzoffset)
                         value = tz_convert_single(value, tz, 'UTC')
                     iresult[i] = value
+                    _res_cache[val] = iresult[i]
                     _check_dts_bounds(&dts)
                 except ValueError:
                     # if requiring iso8601 strings, skip trying other formats
                     if require_iso8601:
                         if is_coerce:
                             iresult[i] = NPY_NAT
+                            _res_cache[val] = iresult[i]
                             continue
                         elif is_raise:
                             raise ValueError(
@@ -2493,25 +2514,30 @@ cpdef array_to_datetime(ndarray[object] values, errors='raise',
                     except Exception:
                         if is_coerce:
                             iresult[i] = NPY_NAT
+                            _res_cache[val] = iresult[i]
                             continue
                         raise TypeError("invalid string coercion to datetime")
 
                     try:
                         _ts = convert_to_tsobject(py_dt, None, None, 0, 0)
                         iresult[i] = _ts.value
+                        _res_cache[val] = iresult[i]
                     except ValueError:
                         if is_coerce:
                             iresult[i] = NPY_NAT
+                            _res_cache[val] = iresult[i]
                             continue
                         raise
                 except:
                     if is_coerce:
                         iresult[i] = NPY_NAT
+                        _res_cache[val] = iresult[i]
                         continue
                     raise
             else:
                 if is_coerce:
                     iresult[i] = NPY_NAT
+                    _res_cache[val] = iresult[i]
                 else:
                     raise TypeError("{0} is not convertible to datetime"
                                     .format(type(val)))
@@ -3605,6 +3631,7 @@ def array_strptime(ndarray[object] values, object fmt,
         bint is_raise = errors=='raise'
         bint is_ignore = errors=='ignore'
         bint is_coerce = errors=='coerce'
+        dict _res_cache = {}
 
     assert is_raise or is_ignore or is_coerce
 
@@ -3664,13 +3691,18 @@ def array_strptime(ndarray[object] values, object fmt,
 
     for i in range(n):
         val = values[i]
+        if val in _res_cache:
+            iresult[i] = _res_cache[val]
+            continue
         if util.is_string_object(val):
             if val in _nat_strings:
                 iresult[i] = NPY_NAT
+                _res_cache[val] = iresult[i]
                 continue
         else:
             if _checknull_with_nat(val):
                 iresult[i] = NPY_NAT
+                _res_cache[val] = iresult[i]
                 continue
             else:
                 val = str(val)
@@ -3681,12 +3713,14 @@ def array_strptime(ndarray[object] values, object fmt,
             if not found:
                 if is_coerce:
                     iresult[i] = NPY_NAT
+                    _res_cache[val] = iresult[i]
                     continue
                 raise ValueError("time data %r does not match "
                                  "format %r (match)" % (values[i], fmt))
             if len(val) != found.end():
                 if is_coerce:
                     iresult[i] = NPY_NAT
+                    _res_cache[val] = iresult[i]
                     continue
                 raise ValueError("unconverted data remains: %s" %
                                   values[i][found.end():])
@@ -3697,6 +3731,7 @@ def array_strptime(ndarray[object] values, object fmt,
             if not found:
                 if is_coerce:
                     iresult[i] = NPY_NAT
+                    _res_cache[val] = iresult[i]
                     continue
                 raise ValueError("time data %r does not match format "
                                  "%r (search)" % (values[i], fmt))
@@ -3834,6 +3869,7 @@ def array_strptime(ndarray[object] values, object fmt,
         except ValueError:
             if is_coerce:
                 iresult[i] = NPY_NAT
+                _res_cache[val] = iresult[i]
                 continue
             raise
         if weekday == -1:
@@ -3849,11 +3885,13 @@ def array_strptime(ndarray[object] values, object fmt,
         dts.ps = ns * 1000
 
         iresult[i] = pandas_datetimestruct_to_datetime(PANDAS_FR_ns, &dts)
+        _res_cache[val] = iresult[i]
         try:
             _check_dts_bounds(&dts)
         except ValueError:
             if is_coerce:
                 iresult[i] = NPY_NAT
+                _res_cache[val] = iresult[i]
                 continue
             raise
 
@@ -4034,6 +4072,7 @@ def cast_to_nanoseconds(ndarray arr):
         ndarray[int64_t] ivalues, iresult
         PANDAS_DATETIMEUNIT unit
         pandas_datetimestruct dts
+        dict _res_cache = {}
 
     shape = (<object> arr).shape
 
@@ -4047,12 +4086,17 @@ def cast_to_nanoseconds(ndarray arr):
 
     unit = get_datetime64_unit(arr.flat[0])
     for i in range(n):
+        if ivalues[i] in _res_cache:
+            iresult[i] = _res_cache[ivalues[i]]
+            continue
         if ivalues[i] != NPY_NAT:
             pandas_datetime_to_datetimestruct(ivalues[i], unit, &dts)
             iresult[i] = pandas_datetimestruct_to_datetime(PANDAS_FR_ns, &dts)
+            _res_cache[ivalues[i]] = iresult[i]
             _check_dts_bounds(&dts)
         else:
             iresult[i] = NPY_NAT
+            _res_cache[ivalues[i]] = iresult[i]
 
     return result
 
